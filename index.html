@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mouse Double Click Checker</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: blue;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .btn-reset {
+            margin-top: 10px;
+        }
+
+        .log-line {
+            color: black;
+            text-align: left;
+        }
+
+        .log-line.double-click {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+<div class="container" id="mainContainer">
+    <h1>DOUBLE CLICK TEST</h1>
+    <p>Use this tool as a mouse tester for a double click test.</p>
+    <div class="form-group">
+        <label for="totalClicks" style="text-align: left; display: block;">Mouse Clicks:</label>
+        <input type="text" id="totalClicks" class="form-control" readonly>
+    </div>
+    <div class="form-group">
+        <label for="doubleClicks" style="text-align: left; display: block;">Double Clicks:</label>
+        <input type="text" id="doubleClicks" class="form-control" readonly>
+    </div>
+    <div class="form-group">
+        <label for="doubleClickRatio"  style="text-align: left; display: block;">Double Click Ratio:</label>
+        <input type="text" id="doubleClickRatio" class="form-control" readonly>
+    </div>
+    <div class="form-group">
+        <label for="log"  style="text-align: left; display: block;">Log:</label>
+        <div id="log" class="form-control" style="height: 150px; overflow-y: auto; text-align: left;"></div>
+    </div>
+    <button id="resetButton" class="btn btn-success btn-reset">Reset</button>
+</div>
+
+<script>
+    const DOUBLE_CLICK_THRESHOLD = 100;
+    const ALERT_THRESHOLD = 0.1;
+    let lastClickMillis = 0;
+    let doubleClickCount = 0;
+    let totalClicks = 0;
+
+    function isMobileDevice() {
+        return /Mobi|Android/i.test(navigator.userAgent);
+    }
+
+    function reset() {
+        return function () {
+            lastClickMillis = 0;
+            doubleClickCount = 0;
+            totalClicks = 0;
+            document.body.style.backgroundColor = 'blue';
+            document.getElementById('totalClicks').value = '';
+            document.getElementById('doubleClicks').value = '';
+            document.getElementById('doubleClickRatio').value = '';
+            document.getElementById('log').innerHTML = '';
+        };
+    }
+
+    function onClick() {
+        return function () {
+            const currentMillis = new Date().getTime();
+            const deltaMillis = currentMillis - lastClickMillis;
+
+            totalClicks++;
+
+            const isDoubleClick = deltaMillis < DOUBLE_CLICK_THRESHOLD;
+            if (isDoubleClick) {
+                doubleClickCount++;
+            }
+
+            lastClickMillis = currentMillis;
+            const doubleClickRatio = doubleClickCount / totalClicks;
+
+            if (doubleClickCount === 0) {
+                document.body.style.backgroundColor = 'blue';
+            } else if (doubleClickRatio > ALERT_THRESHOLD) {
+                document.body.style.backgroundColor = 'red';
+            } else {
+                document.body.style.backgroundColor = 'yellow';
+            }
+
+            document.getElementById('totalClicks').value = totalClicks;
+            document.getElementById('doubleClicks').value = doubleClickCount;
+            document.getElementById('doubleClickRatio').value = doubleClickRatio;
+
+            const logLine = document.createElement('div');
+            logLine.className = 'log-line';
+            logLine.textContent = `${deltaMillis / 1000}`;
+            if (isDoubleClick) {
+                logLine.classList.add('double-click');
+            }
+            const logContainer = document.getElementById('log');
+            logContainer.insertBefore(logLine, logContainer.firstChild);
+        };
+    }
+
+    if (isMobileDevice()) {
+        document.getElementById('mainContainer').innerHTML = '<h1>This tool is only available on desktop devices.</h1>';
+    } else {
+        document.body.addEventListener('click', onClick());
+        document.getElementById('resetButton').addEventListener('click', reset());
+    }
+
+    reset();
+</script>
+</body>
+</html>
